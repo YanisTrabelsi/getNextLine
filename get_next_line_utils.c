@@ -6,97 +6,93 @@
 /*   By: ytrabels </var/spool/mail/ytrabels>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:42:34 by ytrabels          #+#    #+#             */
-/*   Updated: 2026/05/11 04:39:14 by ytrabels         ###   ########.fr       */
+/*   Updated: 2026/05/13 06:33:44 by ytrabels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "get_next_line.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
-int	ft_strlen(char *str)
+int		ft_strlen(char *str)
 {
-	int	count;
-	int	i;
+	int	len;
 
-	count = 0;
-	i = 0;
-	if (!str)
-		return (0);
-	while (str[i])
+	len = 0;
+	while (*str)
 	{
-		++count;
-		++i;
+		++len;
+		++str;
 	}
-	return (count);
+	return (len);
 }
 
-void	realloc_line(char **lineptr, char *buf)
+void	write_realloc_line(char **line, char c)
 {
 	char	*temp;
 	int		i;
 
-	temp = malloc(ft_strlen(*lineptr) + ft_strlen(buf) + 1);
+	i = 0;
+	temp = malloc(ft_strlen(*line) + 2);
 	if (!temp)
 		return ;
-	i = 0;
-	while (*lineptr && (*lineptr)[i])
+	while ((*line)[i])
 	{
-		temp[i] = (*lineptr)[i];
+		temp[i] = (*line)[i];
 		++i;
 	}
-	temp[i] = '\0';
-	free(*lineptr);
-	*lineptr = temp;
+	free(*line);
+	*line = temp;
+	(*line)[i++] = c;
+	(*line)[i] = '\0';
 }
 
-int	write_buf(char *buf, char *line, char *remains, int	*k)
+int	    flush_buf(char **line, char **buf, int fd)
 {
-	int			i;
-	int			j;
+    int i;
 
-	i = 0;
-	j = 0;
-	while (buf[i])
+    i = 0;
+    while ((*buf)[i] && (*buf)[i] != '\n')
+        write_realloc_line(line, (*buf)[i++]);
+    if ((*buf)[i] == '\n')
 	{
-		if (buf[i] == '\n')
-		{
-			++i;
-			while(buf[i])
-				remains[j++] = buf[i++];
-			remains[j] = '\0';
-			return (1);
-		}
-		line[(*k)++] = buf[i++];
+		write_realloc_line(line, (*buf)[i]);
+		set_new_buf(buf, i);
+		return (1);
 	}
-	line[*k] = '\0';
+	if ((*buf)[i])
+		set_new_buf(buf, i);
+	else
+	{
+		free(*buf);
+		*buf = malloc(BUFFER_SIZE + 1);
+		read_fd(*buf, fd);
+	}
 	return (0);
 }
 
-char	*save_remains(char *remains)
-{	
-	static char	*temp;
-	int			i;
+void	set_new_buf(char **buf, int index)
+{
+	int		i;
+	char	*temp;
 
-	temp = malloc(ft_strlen(remains) + 1);
 	i = 0;
-	while (remains[i])
-	{
-		temp[i] = remains[i];
-		++i;
-	}
+	temp = malloc(ft_strlen(*buf) - index);
+	if (!temp)
+		return ;
+	++index;
+	while((*buf)[index])
+		temp[i++] = (*buf)[index++];
 	temp[i] = '\0';
-	return (temp);
+	free(*buf);
+	*buf = temp;
 }
 
-void	load_remains(char *remains, char *temp)
+int	read_fd(char *buf, int fd)
 {
-	int	i;
+	int	read_res;
 
-	i = 0;
-	while (temp[i])
-	{
-		remains[i] = temp[i];
-		i++;
-	}
-	remains[i] = '\0';
+	read_res = read(fd, buf, BUFFER_SIZE);
+	buf[read_res] = '\0';
+	return (read_res);
 }
