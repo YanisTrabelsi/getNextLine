@@ -6,7 +6,7 @@
 /*   By: ytrabels </var/spool/mail/ytrabels>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:35:03 by ytrabels          #+#    #+#             */
-/*   Updated: 2026/05/13 10:22:22 by ytrabels         ###   ########.fr       */
+/*   Updated: 2026/05/13 10:46:08 by ytrabels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "get_next_line.h"
@@ -46,14 +46,14 @@ char	*get_next_line(int fd)
 	i = 0;
 	while (i == 0)
 		i = flush_buf(&line, &buf, fd);
-	if (i == -2)
-		return (NULL);
 	if (i == -1 && *line == '\0')
 	{
 		free(buf);
 		buf = NULL;
 		return (NULL);
 	}
+	if (i == -2)
+		return (NULL);
 	return (line);
 }
 
