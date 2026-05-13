@@ -6,7 +6,7 @@
 /*   By: ytrabels </var/spool/mail/ytrabels>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/05/10 16:42:34 by ytrabels          #+#    #+#             */
-/*   Updated: 2026/05/13 06:33:44 by ytrabels         ###   ########.fr       */
+/*   Updated: 2026/05/13 10:21:13 by ytrabels         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 #include "get_next_line.h"
@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int		ft_strlen(char *str)
+int	ft_strlen(char *str)
 {
 	int	len;
 
@@ -47,26 +47,30 @@ void	write_realloc_line(char **line, char c)
 	(*line)[i] = '\0';
 }
 
-int	    flush_buf(char **line, char **buf, int fd)
+int	flush_buf(char **line, char **buf, int fd)
 {
-    int i;
+	int		i;
+	ssize_t	bytes;
 
-    i = 0;
-    while ((*buf)[i] && (*buf)[i] != '\n')
-        write_realloc_line(line, (*buf)[i++]);
-    if ((*buf)[i] == '\n')
+	i = 0;
+	bytes = 1;
+	while ((*buf)[i] && (*buf)[i] != '\n')
+		write_realloc_line(line, (*buf)[i++]);
+	if ((*buf)[i] == '\n')
 	{
 		write_realloc_line(line, (*buf)[i]);
 		set_new_buf(buf, i);
 		return (1);
 	}
-	if ((*buf)[i])
-		set_new_buf(buf, i);
 	else
 	{
 		free(*buf);
 		*buf = malloc(BUFFER_SIZE + 1);
-		read_fd(*buf, fd);
+		bytes = read_fd(*buf, fd);
+		if (bytes < 0)
+			return (-2);
+		if (bytes == 0)
+			return (-1);
 	}
 	return (0);
 }
@@ -77,22 +81,23 @@ void	set_new_buf(char **buf, int index)
 	char	*temp;
 
 	i = 0;
-	temp = malloc(ft_strlen(*buf) - index);
+	temp = malloc(ft_strlen(*buf) - index + 1);
 	if (!temp)
 		return ;
 	++index;
-	while((*buf)[index])
+	while ((*buf)[index])
 		temp[i++] = (*buf)[index++];
 	temp[i] = '\0';
 	free(*buf);
 	*buf = temp;
 }
 
-int	read_fd(char *buf, int fd)
+ssize_t	read_fd(char *buf, int fd)
 {
-	int	read_res;
+	ssize_t	read_res;
 
 	read_res = read(fd, buf, BUFFER_SIZE);
-	buf[read_res] = '\0';
+	if (read_res >= 0)
+		buf[read_res] = '\0';
 	return (read_res);
 }
